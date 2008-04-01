@@ -1,0 +1,12 @@
+= Feature oriented Revision history for Devel-CoverX-Covered =
+
+
+= 0.001
+
+* covered runs
+
+* covered coverage --source_file=FILE
+
+* First release. The first basic feature done, let's see how a release looks like on
+  CPAN.
+

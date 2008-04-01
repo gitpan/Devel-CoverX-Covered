@@ -1,0 +1,38 @@
+---
+name: Devel-CoverX-Covered
+version: 0.001
+author:
+  - 'Johan Lindström <johanl[ÄT]DarSerMan.com>'
+abstract: |-
+  Collecting and report caller and covered
+  statistics from the cover_db
+license: perl
+resources:
+  license: http://dev.perl.org/licenses/
+requires:
+  Carp: 0
+  DBD::SQLite: 1.12
+  DBIx::Simple: 0
+  Data::Dumper: 0
+  Devel::Cover: 0
+  File::Basename: 0
+  File::Slurp: 0
+  Getopt::Long: 0
+  List::MoreUtils: 0
+  Moose: 0
+  Path::Class: 0.11
+  Pod::Usage: 0
+  Test::Differences: 0
+  Test::Exception: 0
+  Test::More: 0
+  perl: 5.6.0
+provides:
+  Devel::CoverX::Covered:
+    file: lib/Devel/CoverX/Covered.pm
+    version: 0.001
+  Devel::CoverX::Covered::Db:
+    file: lib/Devel/CoverX/Covered/Db.pm
+generated_by: Module::Build version 0.2808
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2

@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+use lib "c:/Dokument/Project/Dev/CPAN/Devel-CoverX-Covered/trunk/source/lib";
+$|++;
+use strict;
+
+use Getopt::Long;
+use Pod::Usage;
+use File::Basename;
+use POSIX;
+use Data::Dumper;
+use Path::Class;
+
+
+use lib "../lib", "lib";
+use Devel::CoverX::Covered::Db;
+
+=head1 NAME
+
+covered -- Command line interface to L<Devel::CoverX::Covered>
+
+=cut
+
+
+
+if($INC{"Devel/Cover.pm"}) {
+    print STDERR "$0 shouldn't be run with Devel::Cover enabled.\n";
+    POSIX::_exit(1);
+}
+
+
+
+main();
+sub main {
+    GetOptions(
+         "cover_db:s"     => \(my $cover_db = "./cover_db"),
+          "source_file:s" => \(my $source_file = ""),
+#          "row:i"        => \(my $row),
+        );
+    my $command = $ARGV[0] or syntax("Please specify a command");
+
+    my $db = Devel::CoverX::Covered::Db->new(dir => dir($cover_db)->absolute);
+    
+    if($command eq "runs") {
+        $db->collect_runs();
+    }
+    elsif($command eq "covering") {
+        $source_file or syntax("Please specify --source_file");
+        print( join("\n", $db->test_files_covering($source_file)) . "\n" );
+    }
+    else {
+        syntax("Unknown command ($command)");
+    }
+
+    return(1);
+}
+
+
+
+=head2 syntax($message)
+
+Die with the syntax text and the $message.
+
+=cut
+sub syntax {
+    my ($message) = @_;
+    die q{NAME - covered
+SYNOPSIS
+
+* Collect test run statistics
+
+  covered runs [--cover_db=./cover_db]
+
+Run this right after the test run, before you run "cover" (because
+that will throw away some information).
+
+
+* List test files covering file
+
+  covered covering --source_file=SOURCE_FILE [--row=N] [--sub=SUB] [--cover_db=./cover_db]
+
+List all test files (usually .t files) that cover any line in
+--source_file.
+
+-- not implemented --
+
+If --row (1..) is specified, limit the list to test files that cover
+that row in particular.
+
+If --sub is specified, limit the list to test files that cover that
+sub in particular.
+
+Error: } . "$message\n";
+}
+
+
+
+__END__

@@ -1,0 +1,12 @@
+.cvsignore
+bin/covered
+Build.PL
+Changes
+lib/Devel/CoverX/Covered.pm
+lib/Devel/CoverX/Covered/Db.pm
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+META.yml
+README
+t/db.t
