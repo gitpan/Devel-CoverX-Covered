@@ -59,6 +59,19 @@ has 'db' => (
 
 
 
+=head2 report_file
+
+Subref called for each $file processed, $report_file->($file).
+
+=cut
+has 'report_file' => (
+    is => 'ro',
+    isa => 'CodeRef',
+    default => sub { sub { } },
+);
+
+
+
 =head1 METHODS
 
 =head2 connect_to_db() : DBIx::Simple $db
@@ -226,6 +239,8 @@ sub collect_run {
     @runs > 1 and warn("More than one run in run cover db\n"), return 0;
     my $calling_file_name = $runs[0]->run;
     $calling_file_name eq "-e" and return 0;
+    
+    $self->report_file->($calling_file_name);
 
     $self->reset_calling_file($calling_file_name);
 
@@ -233,7 +248,7 @@ sub collect_run {
     for my $source_file_name (@source_file_names) {
         my $file_data = $cover_db->cover->file($source_file_name);
 
-        for my $metric_type ("statement", "subroutine" ) { #time, branch
+        for my $metric_type ("subroutine" ) { #time, branch, statement
             my $row_metric = $file_data->$metric_type or next;
 
             for my $row (keys %$row_metric) {
@@ -295,6 +310,7 @@ sub report_metric_coverage {
     my $self = shift;
     my (%p) = @_;
 
+    $p{metric} ||= 0;
     $p{$_} = $self->relative_file($p{$_}) . "" for (qw/ calling_file covered_file /);
 #print Dumper(\%p);
     $self->db->insert("covered_calling_metric", \%p);

@@ -1,6 +1,14 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
 
+= 0.004
+
+* Store db size and time by only storing subroutine coverage
+
+* File progress during "covered run"
+
+
+
 = 0.003
 
 * covered by --test_file=FILE

@@ -43,7 +43,10 @@ sub main {
     );
     my $command = $ARGV[0] or syntax("Please specify a command");
 
-    my $db = Devel::CoverX::Covered::Db->new(dir => dir($cover_db)->absolute);
+    my $db = Devel::CoverX::Covered::Db->new(
+        dir         => dir($cover_db)->absolute,
+        report_file => sub { print "$_[0]\n" },
+    );
     
     if($command eq "runs") {
         $db->collect_runs();

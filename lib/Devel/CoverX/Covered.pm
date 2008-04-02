@@ -53,7 +53,7 @@ row, or sub.
 
 =head2 Usage Scenarios
 
-Using this module it shoud be possible to implement e.g.
+Using this module it should be possible to implement e.g.
 
 =over 4
 
@@ -142,21 +142,36 @@ This is a first release with limited funcionality.
 
   #Query the covered database for details of a source file
   covered lines --test_file=lib/MyApp/DoStuff.pm --metric=statement
-  11, 1
-  17, 0
-  26, 0
-  32, 1
-  77, 3
-  80, 1
-  99, 2
-  102, 2
-  104, 1
+  11\t1
+  17\t0
+  26\t0
+  32\t1
+  77\t3
+  80\t1
+  99\t2
+  102\t2
+  104\t1
+
+
+=head1 EDITOR SUPPORT
+
+=head2 Emacs
+
+L<Devel::PerlySense> has support for listing and navigating to the
+"other" files corresponding to the current one.
+
+
+=head2 Vim
+
+Ovid provides a few simple but conveinent key bindings here:
+L<http://use.perl.org/~Ovid/journal/36030>.
+
 
 =cut
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.003;
+our $VERSION = 0.004;
 
 
 
@@ -169,8 +184,6 @@ __END__
 =head1 SEE ALSO
 
 L<Devel::Cover>
-
-L<Devel::PerlySense> - Emacs integration for Devel::CoverX::Covered (soon)
 
 
 
