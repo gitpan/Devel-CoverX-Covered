@@ -1,6 +1,6 @@
 NAME
-    Devel::CoverX::Covered - Collecting and report caller and covered
-    statistics from the cover_db
+    Devel::CoverX::Covered - Collect and report caller (test file) and
+    covered (source file) statistics from the cover_db
 
 DESCRIPTION
   Dealing with large code bases and large test suites
@@ -69,6 +69,12 @@ SYNOPSIS
       t/myapp-do_stuff/edge_case2.t
 
 
+      #Query the covered database per test file
+      covered by --test_file=t/myapp-do_stuff.t
+      lib/MyApp/DoStuff.pm
+      lib/MyApp/DoStuff/DoOtherStuff.pm
+
+
       #List all known files
       covered info
 
@@ -86,11 +92,6 @@ SYNOPSIS
       covered covering --source_file=lib/MyApp/DoStuff.pm --sub=as_xml
       t/myapp-do_stuff.t
 
-
-      #Query the covered database per test file
-      covered by --test_file=t/myapp-do_stuff.t
-      lib/MyApp/DoStuff.pm
-      lib/MyApp/DoStuff/DoOtherStuff.pm
 
       #Query the covered database per test file, but also show covered
       #subroutines (\t separated)

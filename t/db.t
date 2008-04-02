@@ -1,7 +1,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 19;
+use Test::More tests => 21;
 
 use Path::Class;
 use File::Path;
@@ -108,7 +108,7 @@ is(count_rows($db), 2, "One less row");
 
 
 
-diag("test_files_covering");
+diag("test_files_covering, source_files_covered_by");
 is_deeply(
     [ $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ],
     [],
@@ -140,6 +140,13 @@ is_deeply(
 );
 
 
+is_deeply(
+    [ $covered_db->source_files_covered_by(file(qw/ t data cover_db c.t /) . "") ],
+    [ file(qw/ t data cover_db x.pm /) . "" ],
+    "source_files_covered_by finds the correct source file",
+);
+
+
 
 insert_dummy_calling_file(
     $covered_db,
@@ -153,6 +160,12 @@ is_deeply(
     [ sort $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ],
     [ file(qw/ t data cover_db a.t /) . "", file(qw/ t data cover_db c.t /) . "" ],
     "test_files_covering with two subroutine metric 1 finds the correct test files",
+);
+
+is_deeply(
+    [ $covered_db->source_files_covered_by(file(qw/ t data cover_db c.t /) . "") ],
+    [ file(qw/ t data cover_db x.pm /) . "" ],
+    "source_files_covered_by finds the correct source file",
 );
 
 

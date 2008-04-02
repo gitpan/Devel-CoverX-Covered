@@ -37,10 +37,10 @@ if($INC{"Devel/Cover.pm"}) {
 main();
 sub main {
     GetOptions(
-         "cover_db:s"     => \(my $cover_db = "./cover_db"),
-          "source_file:s" => \(my $source_file = ""),
-#          "row:i"        => \(my $row),
-        );
+        "cover_db:s"    => \(my $cover_db = "./cover_db"),
+        "source_file:s" => \(my $source_file = ""),
+        "test_file:s"   => \(my $test_file = ""),
+    );
     my $command = $ARGV[0] or syntax("Please specify a command");
 
     my $db = Devel::CoverX::Covered::Db->new(dir => dir($cover_db)->absolute);
@@ -51,6 +51,10 @@ sub main {
     elsif($command eq "covering") {
         $source_file or syntax("Please specify --source_file");
         print( join("\n", $db->test_files_covering($source_file)) . "\n" );
+    }
+    elsif($command eq "by") {
+        $test_file or syntax("Please specify --test_file");
+        print( join("\n", $db->source_files_covered_by($test_file)) . "\n" );
     }
     elsif($command eq "info") {
         print( "* Test files *\n" . join("\n", $db->test_files()) . "\n" );

@@ -1,8 +1,8 @@
 
 =head1 NAME
 
-Devel::CoverX::Covered - Collecting and report caller and covered
-statistics from the cover_db
+Devel::CoverX::Covered - Collect and report caller (test file) and
+covered (source file) statistics from the cover_db
 
 
 
@@ -106,6 +106,12 @@ This is a first release with limited funcionality.
   t/myapp-do_stuff/edge_case2.t
 
 
+  #Query the covered database per test file
+  covered by --test_file=t/myapp-do_stuff.t
+  lib/MyApp/DoStuff.pm
+  lib/MyApp/DoStuff/DoOtherStuff.pm
+
+
   #List all known files
   covered info
 
@@ -123,11 +129,6 @@ This is a first release with limited funcionality.
   covered covering --source_file=lib/MyApp/DoStuff.pm --sub=as_xml
   t/myapp-do_stuff.t
 
-
-  #Query the covered database per test file
-  covered by --test_file=t/myapp-do_stuff.t
-  lib/MyApp/DoStuff.pm
-  lib/MyApp/DoStuff/DoOtherStuff.pm
 
   #Query the covered database per test file, but also show covered
   #subroutines (\t separated)
@@ -155,7 +156,7 @@ This is a first release with limited funcionality.
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.002;
+our $VERSION = 0.003;
 
 
 

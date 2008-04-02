@@ -1,11 +1,11 @@
 ---
 name: Devel-CoverX-Covered
-version: 0.002
+version: 0.003
 author:
   - 'Johan Lindström <johanl[ÄT]DarSerMan.com>'
 abstract: |-
-  Collecting and report caller and covered
-  statistics from the cover_db
+  Collect and report caller (test file) and
+  covered (source file) statistics from the cover_db
 license: perl
 resources:
   license: http://dev.perl.org/licenses/
@@ -31,7 +31,7 @@ requires:
 provides:
   Devel::CoverX::Covered:
     file: lib/Devel/CoverX/Covered.pm
-    version: 0.002
+    version: 0.003
   Devel::CoverX::Covered::Db:
     file: lib/Devel/CoverX/Covered/Db.pm
 generated_by: Module::Build version 0.2808

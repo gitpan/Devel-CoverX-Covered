@@ -1,6 +1,12 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
 
+= 0.003
+
+* covered by --test_file=FILE
+
+
+
 = 0.002
 
 * Misc basic things like portable tests, deps in Build.PL, etc.

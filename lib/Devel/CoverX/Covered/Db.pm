@@ -173,6 +173,12 @@ Collect coverage statistics for test runs in "dir".
 sub collect_runs {
     my $self = shift;
 
+    #Temporarily disable the Devel::Cover database validation, since
+    #our db is in there confusing it.
+    no warnings 'redefine';
+    local *Devel::Cover::DB::is_valid = sub { 1 };
+#    local *STDERR;
+    
     $self->in_transaction( sub {
         local $CWD = $self->dir->parent;
         for my $run_db_dir ($self->get_run_dirs()) {
@@ -344,6 +350,35 @@ sub test_files {
     )->flat;
 
     return @test_files;
+}
+
+
+
+=head2 source_files_covered_by($test_file_name) : @source_file_names
+
+Return list of source files that are covered by $test_file_name.
+
+=cut
+sub source_files_covered_by {
+    my $self = shift;
+    my ($test_file_name) = @_;
+
+    #This needs to be sub coverage, so a "use" doesn't execute
+    #statements e.g. "use strict;".
+    my @source_files = $self->db->query(
+        q{
+        SELECT DISTINCT(covered_file)
+            FROM covered_calling_metric
+            WHERE
+                    calling_file = ?
+                AND metric_type = "subroutine"
+                AND metric > 0
+            ORDER by covered_file
+        },
+        $test_file_name,
+    )->flat;
+
+    return @source_files;
 }
 
 
