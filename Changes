@@ -1,6 +1,14 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
 
+= 0.002
+
+* Misc basic things like portable tests, deps in Build.PL, etc.
+
+* covered info -- List all known files for easy reference
+
+
+
 = 0.001
 
 * covered runs

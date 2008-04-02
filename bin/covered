@@ -18,6 +18,11 @@ use Devel::CoverX::Covered::Db;
 
 covered -- Command line interface to L<Devel::CoverX::Covered>
 
+
+=head1 SYNOPSIS
+
+See L<Devel::CoverX::Covered>
+
 =cut
 
 
@@ -47,6 +52,11 @@ sub main {
         $source_file or syntax("Please specify --source_file");
         print( join("\n", $db->test_files_covering($source_file)) . "\n" );
     }
+    elsif($command eq "info") {
+        print( "* Test files *\n" . join("\n", $db->test_files()) . "\n" );
+        print("\n");
+        print( "* Covered files *\n" . join("\n", $db->covered_files()) . "\n" );
+    }
     else {
         syntax("Unknown command ($command)");
     }
@@ -56,11 +66,9 @@ sub main {
 
 
 
-=head2 syntax($message)
-
-Die with the syntax text and the $message.
-
-=cut
+# syntax($message)
+#
+# Die with the syntax text and the $message.
 sub syntax {
     my ($message) = @_;
     die q{NAME - covered

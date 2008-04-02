@@ -116,6 +116,7 @@ sub create_db {
         q{
             CREATE INDEX covered_calling_metric_covered_metric_row ON covered_calling_metric (
                 covered_file,
+                metric_type,
                 metric,
                 covered_row
             )
@@ -322,6 +323,48 @@ sub test_files_covering {
     )->flat;
 
     return @test_files;
+}
+
+
+
+=head2 test_files() : @test_file_names
+
+Return list of test files in the db.
+
+=cut
+sub test_files {
+    my $self = shift;
+
+    my @test_files = $self->db->query(
+        q{
+        SELECT DISTINCT(calling_file)
+            FROM covered_calling_metric
+            ORDER by calling_file
+        },
+    )->flat;
+
+    return @test_files;
+}
+
+
+
+=head2 covered_files() : @source_file_names
+
+Return list of source files in the db.
+
+=cut
+sub covered_files {
+    my $self = shift;
+
+    my @source_files = $self->db->query(
+        q{
+        SELECT DISTINCT(covered_file)
+            FROM covered_calling_metric
+            ORDER by covered_file
+        },
+    )->flat;
+
+    return @source_files;
 }
 
 

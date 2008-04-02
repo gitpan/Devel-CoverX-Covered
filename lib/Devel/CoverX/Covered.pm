@@ -15,8 +15,8 @@ features, knowing exactly which test files provide test coverage for
 which parts of the application becomes less and less obvious.
 
 This is especially true for tests on the acceptance / integration /
-system level (rather than on the unit level where the focus of tests
-is often more focused and easily deduced).
+system level (rather than on the unit level where the tests are more
+focused and easily deduced).
 
 This is also extra obvious for developers new to the code base who
 have no clue what types of code may need extra testing, or about
@@ -26,8 +26,8 @@ common idioms for testing certain parts of the application.
 
 =head2 Enter Devel::CoverX::Covered
 
-This module extracts and stores the relationship between covering test
-files and covered source files.
+Devel::CoverX::Covered extracts and stores the relationship between
+covering test files and covered source files.
 
 This makes it possible to
 
@@ -89,11 +89,12 @@ This is a first release with limited funcionality.
   PERL5OPT=-MDevel::Cover prove -r t
 
   #Collect covered and caller information
+  #  Run this _before_ running "cover"
   #  Don't run with Devel::Covered enabled
   covered runs
 
   #Post process to generate covered database
-  cover -report Covered
+  cover -report Html_basic
 
 
 =head2 During development
@@ -103,6 +104,10 @@ This is a first release with limited funcionality.
   t/myapp-do_stuff.t
   t/myapp-do_stuff/edge_case1.t
   t/myapp-do_stuff/edge_case2.t
+
+
+  #List all known files
+  covered info
 
 -- not implemented --
 
@@ -124,6 +129,15 @@ This is a first release with limited funcionality.
   lib/MyApp/DoStuff.pm
   lib/MyApp/DoStuff/DoOtherStuff.pm
 
+  #Query the covered database per test file, but also show covered
+  #subroutines (\t separated)
+  covered subs_by --test_file=t/myapp-do_stuff.t
+  lib/MyApp/DoStuff.pm       as_xml
+  lib/MyApp/DoStuff.pm       do_stuff
+  lib/MyApp/DoStuff.pm       new
+  lib/MyApp/DoStuff/DoOtherStuff.pm   new
+  lib/MyApp/DoStuff/DoOtherStuff.pm   do_other_stuff
+
 
   #Query the covered database for details of a source file
   covered lines --test_file=lib/MyApp/DoStuff.pm --metric=statement
@@ -141,7 +155,7 @@ This is a first release with limited funcionality.
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.001;
+our $VERSION = 0.002;
 
 
 
@@ -150,3 +164,50 @@ our $VERSION = 0.001;
 
 
 __END__
+
+=head1 SEE ALSO
+
+L<Devel::Cover>
+
+L<Devel::PerlySense> - Emacs integration for Devel::CoverX::Covered (soon)
+
+
+
+=head1 AUTHOR
+
+Johan Lindström, C<< <johanl[ÄT]DarSerMan.com> >>
+
+
+
+=head1 BUGS AND CAVEATS
+
+=head2 BUG REPORTS
+
+Please report any bugs or feature requests to
+C<bug-devel-coverx-covered@rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Devel-CoverX-Covered>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
+
+
+=head2 CAVEATS
+
+
+=head2 KNOWN BUGS
+
+Well, this is more of a cop out really...
+
+Since the covered database file is stuffed into the cover_db
+directory, Devel::Cover's "cover" program will report the Cover
+database as invalid when in fact it works perfectly well.
+
+
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2007 Johan Lindström, All Rights Reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

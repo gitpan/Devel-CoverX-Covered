@@ -12,10 +12,12 @@ WriteMakefile
           'PREREQ_PM' => {
                            'Pod::Usage' => 0,
                            'DBD::SQLite' => '1.12',
+                           'File::chdir' => 0,
                            'DBIx::Simple' => 0,
                            'List::MoreUtils' => 0,
                            'Moose' => 0,
                            'File::Slurp' => 0,
+                           'SQL::Abstract' => 0,
                            'Getopt::Long' => 0,
                            'Test::Exception' => 0,
                            'Data::Dumper' => 0,
