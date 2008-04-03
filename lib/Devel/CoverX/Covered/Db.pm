@@ -39,7 +39,7 @@ The directory for the cover_db.
 has 'dir' => (
     is => 'ro',
     isa => 'Path::Class::Dir',
-    default => sub { dir("./cover_db")->absolute },
+    default => sub { Path::Class::dir("./cover_db")->absolute },
 );
 
 

@@ -117,8 +117,8 @@ SYNOPSIS
 
 EDITOR SUPPORT
   Emacs
-    Devel::PerlySense has support for listing and navigating to the "other"
-    files corresponding to the current one.
+    Devel::PerlySense has a feature "Go to Tests - Other Files" for
+    navigating to related files.
 
   Vim
     Ovid provides a few simple but conveinent key bindings here:

@@ -1,7 +1,8 @@
 
 use strict;
 use warnings;
-use Test::More tests => 21;
+use Test::More tests => 22;
+use Test::Exception;
 
 use Path::Class;
 use File::Path;
@@ -24,6 +25,11 @@ END {
 
 
 diag("Create db file");
+lives_ok(
+    sub { Devel::CoverX::Covered::Db->new() },
+    "Create DB ok with no params ok",
+);
+
 ok(my $covered_db = Devel::CoverX::Covered::Db->new(dir => $test_dir), "Create DB ok");
 ok($covered_db->db, "  and got db object");
 ok(-e file($test_dir, "covered", "covered.db"), "  and SQLite db file");

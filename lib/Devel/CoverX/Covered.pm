@@ -157,8 +157,8 @@ This is a first release with limited funcionality.
 
 =head2 Emacs
 
-L<Devel::PerlySense> has support for listing and navigating to the
-"other" files corresponding to the current one.
+L<Devel::PerlySense> has a feature "Go to Tests - Other Files" for
+navigating to related files.
 
 
 =head2 Vim
@@ -171,7 +171,7 @@ L<http://use.perl.org/~Ovid/journal/36030>.
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.004;
+our $VERSION = 0.005;
 
 
 
