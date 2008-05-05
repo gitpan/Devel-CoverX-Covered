@@ -16,9 +16,9 @@ which parts of the application becomes less and less obvious.
 
 This is especially true for tests on the acceptance / integration /
 system level (rather than on the unit level where the tests are more
-focused and easily deduced).
+concentrated and easily deduced).
 
-This is also extra obvious for developers new to the code base who
+This is also extra difficult for developers new to the code base who
 have no clue what types of code may need extra testing, or about
 common idioms for testing certain parts of the application.
 
@@ -74,7 +74,8 @@ quicker feedback loop than running the entire test suite.
 
 =head2 Development Status
 
-This is a first release with limited funcionality.
+Early release. Solid, but somewhat prone to change as a result of
+feedback.
 
 
 
@@ -82,7 +83,7 @@ This is a first release with limited funcionality.
 
 =head2 Nightly / automatic run
 
-  #Clean up from previous test run
+  #Clean up from previous test run (optional)
   cover -delete
 
   #Test run with coverage instrumentation
@@ -90,7 +91,7 @@ This is a first release with limited funcionality.
 
   #Collect covered and caller information
   #  Run this _before_ running "cover"
-  #  Don't run with Devel::Covered enabled
+  #  Don't run with Devel::Cover enabled
   covered runs
 
   #Post process to generate covered database
@@ -153,6 +154,15 @@ This is a first release with limited funcionality.
   104\t1
 
 
+
+=head1 THE COVERED DATABASE
+
+The Devel::CoverX::Covered database is the "covered" directory located
+next to the "cover_db" directory. It is created by running the
+"covered runs" command (see the SYNOPSIS above).
+
+
+
 =head1 EDITOR SUPPORT
 
 =head2 Emacs
@@ -163,15 +173,36 @@ navigating to related files.
 
 =head2 Vim
 
-Ovid provides a few simple but conveinent key bindings here:
-L<http://use.perl.org/~Ovid/journal/36030>.
+Ovid provides similar key bindings here:
+Lhttp://use.perl.org/~Ovid/journal/36280>.
+
+
+
+=head1 PLAYING WITH OTHERS
+
+=head2 Test::Aggregate
+
+Tests run by L<Test::Aggregate> won't be reported properly. That's
+because the single .t file running all the aggregate tests will be
+reported as the covering test file.
+
+The workaround is to perform the Devel::Cover test run without
+Test::Aggregate, i.e. do something like (assuming "aggtest" contains
+your aggregate tests):
+
+  PERL5OPT=-MDevel::Cover prove -r t aggtest
+
+The extra time taken to do this is probably not a problem since
+running tests with Devel::Cover enabled is so very slow anyway. The
+startup time is simply less significant here.
+
 
 
 =cut
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.005;
+our $VERSION = 0.006;
 
 
 
@@ -206,14 +237,16 @@ your bug as I make changes.
 
 =head2 CAVEATS
 
+The Devel::Cover db version is hard coded since it's not exposed by
+Devel::Cover. So that's a bit fragile.
+
 
 =head2 KNOWN BUGS
 
-Well, this is more of a cop out really...
-
-Since the covered database file is stuffed into the cover_db
-directory, Devel::Cover's "cover" program will report the Cover
-database as invalid when in fact it works perfectly well.
+If you delete a .t file, running the test suite again won't
+de-register it from the covered database. To get rid of it you need to
+delete the "covered" directory and re-run the entire coverage test
+suite.
 
 
 

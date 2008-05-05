@@ -1,5 +1,14 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
+= 0.006
+
+* Moved storage of file names to its own table in order to save disk
+  space.
+
+* Moved covered database from cover_db/covered to ./covered
+
+
+
 = 0.005
 
 * Fixed bug

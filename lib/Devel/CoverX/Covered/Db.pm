@@ -84,11 +84,15 @@ If there is no db at all, create it first.
 sub connect_to_db {
     my $self = shift;
 
-    my $db_file = file($self->dir, "covered", "covered.db");
+    my $db_file = file(
+        $self->dir->parent,
+        "covered",
+        "covered-" . $self->schema_version . ".db",
+    );
 
     -r $db_file or return $self->create_db($db_file);
 
-    my $db = DBIx::Simple->connect("dbi:SQLite:dbname=$db_file", "", "", {RaiseError => 1});
+    my $db = DBIx::Simple->connect("dbi:SQLite:dbname=$db_file", "", "", { RaiseError => 1 });
 
     return $db;
 }
@@ -115,11 +119,22 @@ sub create_db {
 
     my @ddl_tables = (
         q{
+            CREATE TABLE file (
+                file_id INTEGER PRIMARY KEY,
+
+                name               VARCHAR NOT NULL
+            )
+        },
+        q{
+            CREATE UNIQUE INDEX file_name ON file (name)
+        },
+        
+        q{
             CREATE TABLE covered_calling_metric (
                 covered_calling_metric_id INTEGER PRIMARY KEY,
 
-                calling_file       VARCHAR NOT NULL,
-                covered_file       VARCHAR NOT NULL,
+                calling_file_id    INT NOT NULL REFERENCES file (file_id),
+                covered_file_id    INT NOT NULL REFERENCES FILE (file_id),
                 covered_row        INTEGER NOT NULL,
                 covered_sub_name   VARCHAR NOT NULL,
                 metric_type        VARCHAR NOT NULL,
@@ -128,14 +143,14 @@ sub create_db {
         },
         q{
             CREATE INDEX covered_calling_metric_covered_metric_row ON covered_calling_metric (
-                covered_file,
+                covered_file_id,
                 metric_type,
                 metric,
                 covered_row
             )
         },
         q{
-            CREATE INDEX covered_calling_metric_calling ON covered_calling_metric (calling_file)
+            CREATE INDEX covered_calling_metric_calling ON covered_calling_metric (calling_file_id)
         },
     );
 
@@ -145,6 +160,19 @@ sub create_db {
     }
 
     return $db;
+}
+
+
+
+=head2 schema_version() : $version_string
+
+Return a version number of the schema.
+
+=cut
+sub schema_version {
+    my $self = shift;
+    require Devel::CoverX::Covered;
+    return Devel::CoverX::Covered->VERSION;
 }
 
 
@@ -185,12 +213,6 @@ Collect coverage statistics for test runs in "dir".
 =cut
 sub collect_runs {
     my $self = shift;
-
-    #Temporarily disable the Devel::Cover database validation, since
-    #our db is in there confusing it.
-    no warnings 'redefine';
-    local *Devel::Cover::DB::is_valid = sub { 1 };
-#    local *STDERR;
     
     $self->in_transaction( sub {
         local $CWD = $self->dir->parent;
@@ -292,7 +314,8 @@ sub reset_calling_file {
     my $self = shift;
     my ($calling_file_name) = @_;
 
-    $self->db->delete("covered_calling_metric", { calling_file => $calling_file_name });
+    my $calling_file_id = $self->get_file_id($calling_file_name);
+    $self->db->delete("covered_calling_metric", { calling_file_id => $calling_file_id });
 
     return 1;
 }
@@ -312,10 +335,42 @@ sub report_metric_coverage {
 
     $p{metric} ||= 0;
     $p{$_} = $self->relative_file($p{$_}) . "" for (qw/ calling_file covered_file /);
+
+    for my $file_key (qw/ calling_file covered_file /) {
+        $p{ "${file_key}_id" } = $self->get_file_id($p{$file_key});
+        delete $p{$file_key};
+    }
+    
 #print Dumper(\%p);
     $self->db->insert("covered_calling_metric", \%p);
 
     return 1;
+}
+
+
+
+=head2 get_file_id($file_name) : $file_id
+
+Return the db id of the table "file" row for $file_name. Create a new
+row if missing.
+
+Return the new $file_id.
+
+=cut
+sub get_file_id {
+    my $self = shift;
+    my ($file_name) = @_;
+
+    $self->db->query(
+        "select file_id from file where name = ?",
+        $file_name,
+    )->into( my $file_id );
+    $file_id and return $file_id;
+
+    $self->db->insert("file", { name => $file_name });
+    $file_id = $self->db->last_insert_id(undef, undef, "file", "file_id");
+    
+    return $file_id;
 }
 
 
@@ -333,13 +388,15 @@ sub test_files_covering {
     #statements e.g. "use strict;".
     my @test_files = $self->db->query(
         q{
-        SELECT DISTINCT(calling_file)
-            FROM covered_calling_metric
+        SELECT DISTINCT(f_calling.name)
+            FROM covered_calling_metric ccm, file f_calling, file f_covered
             WHERE
-                    covered_file = ?
-                AND metric_type = "subroutine"
-                AND metric > 0
-            ORDER by calling_file
+                    f_covered.name = ?
+                AND ccm.calling_file_id = f_calling.file_id
+                AND ccm.covered_file_id = f_covered.file_id
+                AND ccm.metric_type = "subroutine"
+                AND ccm.metric > 0
+            ORDER by f_calling.name
         },
         $calling_file_name,
     )->flat;
@@ -359,9 +416,10 @@ sub test_files {
 
     my @test_files = $self->db->query(
         q{
-        SELECT DISTINCT(calling_file)
-            FROM covered_calling_metric
-            ORDER by calling_file
+        SELECT DISTINCT(f.name)
+            FROM covered_calling_metric ccm, file f
+            WHERE ccm.calling_file_id = f.file_id
+            ORDER by f.name
         },
     )->flat;
 
@@ -383,13 +441,15 @@ sub source_files_covered_by {
     #statements e.g. "use strict;".
     my @source_files = $self->db->query(
         q{
-        SELECT DISTINCT(covered_file)
-            FROM covered_calling_metric
+        SELECT DISTINCT(f_covered.name)
+            FROM covered_calling_metric ccm, file f_calling, file f_covered
             WHERE
-                    calling_file = ?
-                AND metric_type = "subroutine"
-                AND metric > 0
-            ORDER by covered_file
+                    f_calling.name = ?
+                AND ccm.covered_file_id = f_covered.file_id
+                AND ccm.calling_file_id = f_calling.file_id
+                AND ccm.metric_type = "subroutine"
+                AND ccm.metric > 0
+            ORDER by f_covered.name
         },
         $test_file_name,
     )->flat;
@@ -409,9 +469,10 @@ sub covered_files {
 
     my @source_files = $self->db->query(
         q{
-        SELECT DISTINCT(covered_file)
-            FROM covered_calling_metric
-            ORDER by covered_file
+        SELECT DISTINCT(f.name)
+            FROM covered_calling_metric ccm, file f
+            WHERE ccm.covered_file_id = f.file_id
+            ORDER by f.name
         },
     )->flat;
 

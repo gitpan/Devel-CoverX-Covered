@@ -1,25 +1,35 @@
 
 use strict;
 use warnings;
-use Test::More tests => 22;
+use Test::More tests => 32;
 use Test::Exception;
 
+use Data::Dumper;
 use Path::Class;
 use File::Path;
 
+
+
+use lib "lib";
+
 use Devel::CoverX::Covered::Db;
+use Devel::CoverX::Covered;
 
 
 my $test_dir = dir(qw/ t data cover_db /);
+my $covered_dir = dir($test_dir->parent, "covered");
 
-rmtree([$test_dir]);
+rmtree([ $test_dir, $covered_dir ]);
 ok( ! -d $test_dir, "  no cover_db");
-mkpath([$test_dir]);
+ok( ! -d $covered_dir, "  no covered");
+mkpath([ $test_dir, $covered_dir ]);
 ok( -d $test_dir, "  created cover_db");
+ok( -d $covered_dir, "  created covered_db");
 
 END {
-    rmtree([$test_dir]);
+    rmtree([ $test_dir, $covered_dir ]);
     ok( ! -d $test_dir, "  Cleaned up ($test_dir)");
+    ok( ! -d $covered_dir, "  Cleaned up ($covered_dir)");
 }
 
 
@@ -30,12 +40,22 @@ lives_ok(
     "Create DB ok with no params ok",
 );
 
+my $count;
+
 ok(my $covered_db = Devel::CoverX::Covered::Db->new(dir => $test_dir), "Create DB ok");
 ok($covered_db->db, "  and got db object");
-ok(-e file($test_dir, "covered", "covered.db"), "  and SQLite db file");
+is(
+    scalar @{[ glob( file($test_dir->parent, "covered") . "/*.db") ]},
+    1,
+    "  and SQLite db file",
+);
 
-$covered_db->db->query("select count(*) from covered_calling_metric")->into( my $count );
+$covered_db->db->query("select count(*) from covered_calling_metric")->into( $count );
 is($count, 0, "  and got empty table");
+
+$covered_db->db->query("select count(*) from file")->into( $count );
+is($count, 0, "  and got empty table");
+
 
 
 
@@ -53,8 +73,9 @@ is($count, 0, "  and got empty table");
 diag("reset_calling_file");
 
 sub count_rows {
-    my ($db) = @_;
-    $db->query("select count(*) from covered_calling_metric")->into( my $count );
+    my ($db, $table) = @_;
+    $table ||= "covered_calling_metric";
+    $db->query("select count(*) from $table")->into( my $count );
     return $count;
 }
 
@@ -79,7 +100,11 @@ sub insert_dummy_calling_file {
 };
 
 is(count_rows($db), 0, "No rows");
-insert_dummy_calling_file($covered_db, calling_file => "a.t", covered_file => "x.pm");
+insert_dummy_calling_file(
+    $covered_db,
+    calling_file => "a.t",
+    covered_file => "x.pm",
+);
 insert_dummy_calling_file(
     $covered_db,
     calling_file     => "b.t",
@@ -123,6 +148,8 @@ is_deeply(
 
 
 
+is(count_rows($db), 2, "  Fixture rows");
+is(count_rows($db, "file"), 4, "  Fixture file rows");
 insert_dummy_calling_file(
     $covered_db,
     calling_file     => "c.t",
@@ -131,6 +158,8 @@ insert_dummy_calling_file(
     covered_sub_name => "c",
     metric           => 1,
 );
+is(count_rows($db), 3, "  Fixture rows");
+is(count_rows($db, "file"), 4, "  Fixture file rows");
 insert_dummy_calling_file(
     $covered_db,
     calling_file     => "c.t",
@@ -139,11 +168,13 @@ insert_dummy_calling_file(
     covered_sub_name => "a",
     metric           => 1,
 );
+is(count_rows($db), 4, "  Fixture rows");
+is(count_rows($db, "file"), 4, "  Fixture file rows");
 is_deeply(
-    [ $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ],
+    [ $covered_db->test_files_covering(file($covered_db->dir, "x.pm") . "") ],
     [ file(qw/ t data cover_db c.t /) . "" ],
     "test_files_covering with two subroutine metric 1 finds the correct test file",
-);
+) or die(Dumper([ $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ]));
 
 
 is_deeply(

@@ -9,4 +9,6 @@ MANIFEST
 MANIFEST.SKIP
 META.yml
 README
+t/db-file.t
+t/db-schema_version.t
 t/db.t
