@@ -202,7 +202,7 @@ startup time is simply less significant here.
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.006;
+our $VERSION = 0.007;
 
 
 

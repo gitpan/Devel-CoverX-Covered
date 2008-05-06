@@ -10,5 +10,6 @@ MANIFEST.SKIP
 META.yml
 README
 t/db-file.t
+t/db-is_calling_file_name_valid.t
 t/db-schema_version.t
 t/db.t

@@ -72,6 +72,21 @@ has 'report_file' => (
 
 
 
+=head2 rex_skip_calling_file
+
+Regex matching test files to skip.
+
+Default: matches prove and prove.bat
+
+=cut
+has 'rex_skip_calling_file' => (
+    is => 'rw',
+    isa => 'RegexpRef',
+    default => sub { qr/ \b prove ( [.]bat )? $/x },
+);
+
+
+
 =head1 METHODS
 
 =head2 connect_to_db() : DBIx::Simple $db
@@ -128,7 +143,7 @@ sub create_db {
         q{
             CREATE UNIQUE INDEX file_name ON file (name)
         },
-        
+
         q{
             CREATE TABLE covered_calling_metric (
                 covered_calling_metric_id INTEGER PRIMARY KEY,
@@ -213,7 +228,7 @@ Collect coverage statistics for test runs in "dir".
 =cut
 sub collect_runs {
     my $self = shift;
-    
+
     $self->in_transaction( sub {
         local $CWD = $self->dir->parent;
         for my $run_db_dir ($self->get_run_dirs()) {
@@ -245,25 +260,24 @@ sub get_run_dirs {
 
 
 
-=head2 collect_run($cover_db) : 1
+=head2 collect_run($cover_db) : 1 | 0
 
 Collect coverage statistics for the test run Devel::Cover::DB
 $cover_db.
 
-Don't collect coverage for eval (-e).
+Don't collect coverage for eval (-e), nor for any test file matching
+rex_skip_calling_file.
+
+Return 1 if the test run was collected, else 0.
 
 =cut
 sub collect_run {
     my $self = shift;
     my ($cover_db) = @_;
 
-    my @runs = $cover_db->runs;
-    @runs > 1 and warn("More than one run in run cover db\n"), return 0;
-    my $calling_file_name = $runs[0]->run;
-    $calling_file_name eq "-e" and return 0;
-    
+    my $calling_file_name = $self->calling_file_name($cover_db) or return 0;
     $self->report_file->($calling_file_name);
-
+    
     $self->reset_calling_file($calling_file_name);
 
     my @source_file_names = $cover_db->cover->items;
@@ -279,12 +293,12 @@ sub collect_run {
 
                 my $sub_name = "";
                 if($row_location->can("name")) {
-#print Dumper($row_location);                    
+#print Dumper($row_location);
                     $sub_name = $row_location->name;
                     $sub_name eq "BEGIN" and next;
                     $sub_name eq "__ANON__" and next;
                 }
-                
+
                 my $is_covered = $row_location->covered;
 
                 $self->report_metric_coverage(
@@ -302,6 +316,53 @@ sub collect_run {
     return 1;
 }
 
+
+
+
+=head2 calling_file_name($cover_db) : $calling_file_name | ""
+
+Extract the $calling_file_name from $cover_db and return it.
+
+Return "" if it's not a suitable calling file, or the callinging file
+is on the skip list. Warn with specifics.
+
+=cut
+sub calling_file_name {
+    my $self = shift;
+    my ($cover_db) = @_;
+            
+    my @runs = $cover_db->runs;
+    @runs > 1 and warn("More than one run in run cover db\n"), return "";
+    my $calling_file_name = $runs[0]->run;
+
+    $self->is_calling_file_name_valid($calling_file_name) or return "";
+
+    return $calling_file_name;
+}
+
+
+
+=head2 is_calling_file_name_valid($file_name) : 1 | 0
+
+Return 1 if $file_name is a valid calling file name, else 0.
+
+It may be invalid because of unsuitability, or because it was
+skipped. Warn if skipped.
+
+=cut
+sub is_calling_file_name_valid {
+    my $self = shift;
+    my ($calling_file_name) = @_;
+            
+    $calling_file_name eq "-e" and return 0;
+    
+    if ($calling_file_name =~ $self->rex_skip_calling_file) {
+        warn("Skipping test file ($calling_file_name)\n");
+        return 0;
+    }
+
+    return 1;
+}
 
 
 
@@ -340,7 +401,7 @@ sub report_metric_coverage {
         $p{ "${file_key}_id" } = $self->get_file_id($p{$file_key});
         delete $p{$file_key};
     }
-    
+
 #print Dumper(\%p);
     $self->db->insert("covered_calling_metric", \%p);
 
@@ -369,7 +430,7 @@ sub get_file_id {
 
     $self->db->insert("file", { name => $file_name });
     $file_id = $self->db->last_insert_id(undef, undef, "file", "file_id");
-    
+
     return $file_id;
 }
 

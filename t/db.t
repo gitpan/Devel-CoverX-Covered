@@ -1,7 +1,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 32;
+use Test::More tests => 34;
 use Test::Exception;
 
 use Data::Dumper;
@@ -49,6 +49,21 @@ is(
     1,
     "  and SQLite db file",
 );
+
+
+
+like(
+    "hey/prove.bat",
+    $covered_db->rex_skip_calling_file,
+    "  default skip rex matches prove.bat",
+);
+unlike(
+    "hey/baberiba",
+    $covered_db->rex_skip_calling_file,
+    "  default skip rex doesn't match nonsense",
+);
+
+
 
 $covered_db->db->query("select count(*) from covered_calling_metric")->into( $count );
 is($count, 0, "  and got empty table");

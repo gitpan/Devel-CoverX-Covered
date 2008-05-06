@@ -37,9 +37,10 @@ if($INC{"Devel/Cover.pm"}) {
 main();
 sub main {
     GetOptions(
-        "cover_db:s"    => \(my $cover_db = "./cover_db"),
-        "source_file:s" => \(my $source_file = ""),
-        "test_file:s"   => \(my $test_file = ""),
+        "cover_db:s"              => \(my $cover_db = "./cover_db"),
+        "source_file:s"           => \(my $source_file = ""),
+        "test_file:s"             => \(my $test_file = ""),
+        "rex_skip_calling_file:s" => \(my $rex_skip_calling_file),
     );
     my $command = $ARGV[0] or syntax("Please specify a command");
 
@@ -47,6 +48,16 @@ sub main {
         dir         => dir($cover_db)->absolute,
         report_file => sub { print "$_[0]\n" },
     );
+
+    if ($rex_skip_calling_file) {
+        my $rex = eval "qr $rex_skip_calling_file";
+        $@ and die("Could not parse regexp ($rex_skip_calling_file):
+$@
+Correct regex syntax is e.g. '/ prove [.] bat /x'
+");
+        $db->rex_skip_calling_file($rex);
+    }
+
     
     if($command eq "runs") {
         $db->collect_runs();
@@ -83,10 +94,13 @@ SYNOPSIS
 
 * Collect test run statistics
 
-  covered runs [--cover_db=./cover_db]
+  covered runs [--cover_db=./cover_db] [--rex_skip_calling_file='/ prove ([.]bat)? $/x']
 
 Run this right after the test run, before you run "cover" (because
 that will throw away some information).
+
+Avoid collection any information from test files matching
+$rex_skip_calling_file (default: the prove command).
 
 
 * List test files covering file
