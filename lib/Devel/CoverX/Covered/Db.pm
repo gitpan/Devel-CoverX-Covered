@@ -26,6 +26,7 @@ use DBD::SQLite;
 use File::Path;
 use File::chdir;
 use Path::Class;
+use Memoize;
 
 
 
@@ -145,21 +146,32 @@ sub create_db {
         },
 
         q{
+            CREATE TABLE metric_type (
+                metric_type_id INTEGER PRIMARY KEY,
+
+                type               VARCHAR NOT NULL
+            )
+        },
+        q{
+            CREATE UNIQUE INDEX metric_type_type ON metric_type (type)
+        },
+
+        q{
             CREATE TABLE covered_calling_metric (
                 covered_calling_metric_id INTEGER PRIMARY KEY,
 
-                calling_file_id    INT NOT NULL REFERENCES file (file_id),
-                covered_file_id    INT NOT NULL REFERENCES FILE (file_id),
+                calling_file_id    INTEGER NOT NULL REFERENCES file (file_id),
+                covered_file_id    INTEGER NOT NULL REFERENCES file (file_id),
                 covered_row        INTEGER NOT NULL,
                 covered_sub_name   VARCHAR NOT NULL,
-                metric_type        VARCHAR NOT NULL,
+                metric_type_id     INTEGER NOT NULL REFERENCES metric_type (metric_type_id),
                 metric             INTEGER NOT NULL
             )
         },
         q{
             CREATE INDEX covered_calling_metric_covered_metric_row ON covered_calling_metric (
                 covered_file_id,
-                metric_type,
+                metric_type_id,
                 metric,
                 covered_row
             )
@@ -170,7 +182,7 @@ sub create_db {
     );
 
     for my $ddl (@ddl_tables) {
-#        print "DDL: $ddl\n";
+#print "DDL: $ddl\n";
         $db->query($ddl) or die("Could not run DDL ($ddl): " . $db->error . "\n");
     }
 
@@ -277,7 +289,7 @@ sub collect_run {
 
     my $calling_file_name = $self->calling_file_name($cover_db) or return 0;
     $self->report_file->($calling_file_name);
-    
+
     $self->reset_calling_file($calling_file_name);
 
     my @source_file_names = $cover_db->cover->items;
@@ -293,7 +305,6 @@ sub collect_run {
 
                 my $sub_name = "";
                 if($row_location->can("name")) {
-#print Dumper($row_location);
                     $sub_name = $row_location->name;
                     $sub_name eq "BEGIN" and next;
                     $sub_name eq "__ANON__" and next;
@@ -330,7 +341,7 @@ is on the skip list. Warn with specifics.
 sub calling_file_name {
     my $self = shift;
     my ($cover_db) = @_;
-            
+
     my @runs = $cover_db->runs;
     @runs > 1 and warn("More than one run in run cover db\n"), return "";
     my $calling_file_name = $runs[0]->run;
@@ -353,9 +364,9 @@ skipped. Warn if skipped.
 sub is_calling_file_name_valid {
     my $self = shift;
     my ($calling_file_name) = @_;
-            
+
     $calling_file_name eq "-e" and return 0;
-    
+
     if ($calling_file_name =~ $self->rex_skip_calling_file) {
         warn("Skipping test file ($calling_file_name)\n");
         return 0;
@@ -397,12 +408,17 @@ sub report_metric_coverage {
     $p{metric} ||= 0;
     $p{$_} = $self->relative_file($p{$_}) . "" for (qw/ calling_file covered_file /);
 
-    for my $file_key (qw/ calling_file covered_file /) {
-        $p{ "${file_key}_id" } = $self->get_file_id($p{$file_key});
-        delete $p{$file_key};
+    my $metric_lookup_method = {
+        calling_file => "get_file_id",
+        covered_file => "get_file_id",
+        metric_type  => "get_metric_type_id",
+    };
+    for my $metric ( keys %$metric_lookup_method ) {
+        my $lookup_method = $metric_lookup_method->{$metric};
+        $p{ "${metric}_id" } = $self->$lookup_method( $p{$metric} );
+        delete $p{$metric};
     }
 
-#print Dumper(\%p);
     $self->db->insert("covered_calling_metric", \%p);
 
     return 1;
@@ -415,23 +431,63 @@ sub report_metric_coverage {
 Return the db id of the table "file" row for $file_name. Create a new
 row if missing.
 
-Return the new $file_id.
+Memoized.
+
+Return the new or existing $file_id.
 
 =cut
+memoize("get_file_id");
 sub get_file_id {
     my $self = shift;
     my ($file_name) = @_;
+    $self->get_lookup_table_id("file", "file_id", "name", $file_name);
+}
+
+
+
+=head2 get_metric_type_id($metric_type) : $metric_type_id
+
+Return the db id of the table "metric_type" row for $metric_type. Create a new
+row if missing.
+
+Memoized.
+
+Return the new or existing $metric_type_id.
+
+=cut
+memoize("get_metric_type_id");
+sub get_metric_type_id {
+    my $self = shift;
+    my ($metric_type) = @_;
+    $self->get_lookup_table_id("metric_type", "metric_type_id", "type", $metric_type);
+}
+
+
+
+=head2 get_lookup_table_id($table_name, $id_column_name, $value_column_name, $lookup_table_value) : $lookup_table_id
+
+Return the db id in $id_column_name of the $table_name row for
+$lookup_table_value.
+
+Create a new row if missing.
+
+Return the new or existing $lookup_table_id.
+
+=cut
+sub get_lookup_table_id {
+    my $self = shift;
+    my ($table_name, $id_column_name, $value_column_name, $lookup_table_value) = @_;
 
     $self->db->query(
-        "select file_id from file where name = ?",
-        $file_name,
-    )->into( my $file_id );
-    $file_id and return $file_id;
+        "select $id_column_name from $table_name where $value_column_name = ?",
+        $lookup_table_value,
+    )->into( my $lookup_table_id );
+    $lookup_table_id and return $lookup_table_id;
 
-    $self->db->insert("file", { name => $file_name });
-    $file_id = $self->db->last_insert_id(undef, undef, "file", "file_id");
+    $self->db->insert($table_name, { $value_column_name => $lookup_table_value });
+    $lookup_table_id = $self->db->last_insert_id(undef, undef, $table_name, "$id_column_name");
 
-    return $file_id;
+    return $lookup_table_id;
 }
 
 
@@ -455,11 +511,12 @@ sub test_files_covering {
                     f_covered.name = ?
                 AND ccm.calling_file_id = f_calling.file_id
                 AND ccm.covered_file_id = f_covered.file_id
-                AND ccm.metric_type = "subroutine"
+                AND ccm.metric_type_id = ?
                 AND ccm.metric > 0
             ORDER by f_calling.name
         },
         $calling_file_name,
+        $self->get_metric_type_id("subroutine"),
     )->flat;
 
     return @test_files;
@@ -508,11 +565,12 @@ sub source_files_covered_by {
                     f_calling.name = ?
                 AND ccm.covered_file_id = f_covered.file_id
                 AND ccm.calling_file_id = f_calling.file_id
-                AND ccm.metric_type = "subroutine"
+                AND ccm.metric_type_id = ?
                 AND ccm.metric > 0
             ORDER by f_covered.name
         },
         $test_file_name,
+        $self->get_metric_type_id("subroutine"),
     )->flat;
 
     return @source_files;

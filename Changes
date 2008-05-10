@@ -1,5 +1,16 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
+= 0.008
+
+* "covered info" now outputs version
+
+* Moved storage of metric types to its own table in order to save disk
+  space.
+
+* Memoized lookup tables
+
+
+
 = 0.007
 
 * Avoid collection information for the "prove" program (or calling

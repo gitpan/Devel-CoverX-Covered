@@ -12,6 +12,7 @@ WriteMakefile
           'PREREQ_PM' => {
                            'Pod::Usage' => 0,
                            'DBD::SQLite' => '1.12',
+                           'Memoize' => 0,
                            'File::chdir' => 0,
                            'DBIx::Simple' => 0,
                            'List::MoreUtils' => 0,
