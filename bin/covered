@@ -37,11 +37,13 @@ if($INC{"Devel/Cover.pm"}) {
 
 main();
 sub main {
+    my @rex_skip_source_file;
     GetOptions(
         "cover_db:s"              => \(my $cover_db = "./cover_db"),
         "source_file:s"           => \(my $source_file = ""),
         "test_file:s"             => \(my $test_file = ""),
         "rex_skip_calling_file:s" => \(my $rex_skip_calling_file),
+        "rex_skip_source_file:s"  => \@rex_skip_source_file,
     );
     my $command = $ARGV[0] or syntax("Please specify a command");
 
@@ -51,14 +53,11 @@ sub main {
     );
 
     if ($rex_skip_calling_file) {
-        my $rex = eval "qr $rex_skip_calling_file";
-        $@ and die("Could not parse regexp ($rex_skip_calling_file):
-$@
-Correct regex syntax is e.g. '/ prove [.] bat /x'
-");
-        $db->rex_skip_calling_file($rex);
+        $db->rex_skip_calling_file( rex_from_qr($rex_skip_calling_file) );
     }
-
+    
+    $db->rex_skip_source_file([ map { rex_from_qr($_) } @rex_skip_source_file ]);
+    
     
     if($command eq "runs") {
         $db->collect_runs();
@@ -70,6 +69,10 @@ Correct regex syntax is e.g. '/ prove [.] bat /x'
     elsif($command eq "by") {
         $test_file or syntax("Please specify --test_file");
         print( join("\n", $db->source_files_covered_by($test_file)) . "\n" );
+    }
+    elsif($command eq "subs") {
+        $source_file or syntax("Please specify --source_file");
+        print( join("\n", map { join("\t", @$_) } $db->covered_subs($source_file)) . "\n" );
     }
     elsif($command eq "info") {
         print( "* Covered *\nVersion: " . Devel::CoverX::Covered->VERSION . "\n" );
@@ -97,33 +100,63 @@ SYNOPSIS
 
 * Collect test run statistics
 
-  covered runs [--cover_db=./cover_db] [--rex_skip_calling_file='/ prove ([.]bat)? $/x']
+  covered runs
+      [--cover_db=./cover_db]
+      [--rex_skip_calling_file='/ prove ([.]bat)? $/x']
+      [--rex_skip_source_file]
 
 Run this right after the test run, before you run "cover" (because
 that will throw away some information).
 
 Avoid collection any information from test files matching
-$rex_skip_calling_file (default: the prove command).
+$rex_skip_calling_file (default: the prove command), and from source
+files matching any of @rex_skip_source_file.
 
 
 * List test files covering file
 
-  covered covering --source_file=SOURCE_FILE [--row=N] [--sub=SUB] [--cover_db=./cover_db]
+  covered covering --source_file=SOURCE_FILE [--cover_db=./cover_db]
 
 List all test files (usually .t files) that cover any line in
 --source_file.
 
--- not implemented --
 
-If --row (1..) is specified, limit the list to test files that cover
-that row in particular.
+* List source files covered by test
 
-If --sub is specified, limit the list to test files that cover that
-sub in particular.
+  covered by --test_file=TEST_FILE [--cover_db=./cover_db]
+
+List all source files that are covered by any line in --test_file.
+
+
+* List subs in --source_file that are covered any test file
+
+  covered subs --source_file=SOURCE_FILE [--cover_db=./cover_db]
+
+List all "sub names \t coverage count" for --source_file.
+
 
 Error: } . "$message\n";
 }
 
 
 
+sub rex_from_qr {
+    my ($rex_string) = @_;
+    my $rex = eval "qr $rex_string";
+    $@ and die("Could not parse regexp ($rex_string):
+$@
+Correct regex syntax is e.g. '/ prove [.] bat /x'
+");    
+}
+
+
+
 __END__
+
+[--row=N] [--sub=SUB] 
+
+If --row (1..) is specified, limit the list to test files that cover
+that row in particular.
+
+If --sub is specified, limit the list to test files that cover that
+sub in particular.

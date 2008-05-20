@@ -47,7 +47,7 @@ file.
 =item *
 
 Given a source file, report efficiently on the coverage details per
-row, or sub.
+row, or sub and highlight source code accordingly.
 
 
 
@@ -72,6 +72,14 @@ quicker feedback loop than running the entire test suite.
 =back
 
 
+
+=head2 OUTPUT FORMAT
+
+The general output format is one record per line. When there are may
+columns per record, they are tab separated.
+
+
+
 =head2 Development Status
 
 Early release. Solid, but somewhat prone to change as a result of
@@ -93,6 +101,9 @@ feedback.
   #  Run this _before_ running "cover"
   #  Don't run with Devel::Cover enabled
   covered runs
+    - or e.g. -
+  covered runs --rex_skip_test_file='/your-prove-file.pl$/' \
+          --rex_skip_source_file='{app_cpan_deps/}'
 
   #Post process to generate covered database
   cover -report Html_basic
@@ -113,7 +124,16 @@ feedback.
   lib/MyApp/DoStuff/DoOtherStuff.pm
 
 
-  #List all known files
+  #Query the covered database for coverate details of a source file
+  #sub_name \t coverage count (0 is red, >= 1 is green)
+  covered subs --source_file=lib/MyApp/DoStuff.pm
+  new       4
+  as_string 32
+  as_xml    0
+  do_stuff  4
+
+
+  #List version, and all known files
   covered info
 
 -- not implemented --
@@ -142,16 +162,16 @@ feedback.
 
 
   #Query the covered database for details of a source file
-  covered lines --test_file=lib/MyApp/DoStuff.pm --metric=statement
-  11\t1
-  17\t0
-  26\t0
-  32\t1
-  77\t3
-  80\t1
-  99\t2
-  102\t2
-  104\t1
+  covered lines --source_file=lib/MyApp/DoStuff.pm --metric=statement
+  11   1
+  17   0
+  26   0
+  32   1
+  77   3
+  80   1
+  99   2
+  102  2
+  104  1
 
 
 
@@ -174,7 +194,7 @@ navigating to related files.
 =head2 Vim
 
 Ovid provides similar key bindings here:
-Lhttp://use.perl.org/~Ovid/journal/36280>.
+L<http://use.perl.org/~Ovid/journal/36280>.
 
 
 
@@ -202,7 +222,7 @@ startup time is simply less significant here.
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.008;
+our $VERSION = 0.009;
 
 
 

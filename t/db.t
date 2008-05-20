@@ -1,7 +1,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 34;
+use Test::More tests => 35;
 use Test::Exception;
 
 use Data::Dumper;
@@ -207,6 +207,37 @@ is_deeply(
 
 
 
+
+diag("covered_subs");
+
+insert_dummy_calling_file(
+    $covered_db,
+    calling_file     => "a.t",
+    covered_file     => "x.pm",
+    covered_row      => 10,
+    covered_sub_name => "b",
+    metric           => 3,
+);
+
+insert_dummy_calling_file(
+    $covered_db,
+    calling_file     => "a.t",
+    covered_file     => "x.pm",
+    covered_row      => 1000,
+    covered_sub_name => "a",
+    metric           => 7,
+);
+
+is_deeply(
+    [ $covered_db->covered_subs(file(qw/ t data cover_db x.pm /) . "") ],
+    [
+        [ "b", 3 ],  #One undef metric, one 3
+        [ "c", 1 ],
+        [ "a", 2 ],  #On one row
+        [ "a", 7 ],  #On another row
+    ],
+    "covered_subs finds the correc sub names and coverage count",
+);
 
 
 

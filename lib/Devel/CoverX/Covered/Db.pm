@@ -88,6 +88,21 @@ has 'rex_skip_calling_file' => (
 
 
 
+=head2 rex_skip_source_file
+
+Array ref with Regexes matching source files to skip.
+
+Default: []
+
+=cut
+has 'rex_skip_source_file' => (
+    is => 'rw',
+    isa => 'ArrayRef[RegexpRef]',
+    default => sub { [] },
+);
+
+
+
 =head1 METHODS
 
 =head2 connect_to_db() : DBIx::Simple $db
@@ -294,6 +309,8 @@ sub collect_run {
 
     my @source_file_names = $cover_db->cover->items;
     for my $source_file_name (@source_file_names) {
+        $self->is_source_file_name_valid($source_file_name) or next;
+        
         my $file_data = $cover_db->cover->file($source_file_name);
 
         for my $metric_type ("subroutine" ) { #time, branch, statement
@@ -346,7 +363,8 @@ sub calling_file_name {
     @runs > 1 and warn("More than one run in run cover db\n"), return "";
     my $calling_file_name = $runs[0]->run;
 
-    $self->is_calling_file_name_valid($calling_file_name) or return "";
+    $self->is_calling_file_name_valid($calling_file_name)
+            or warn("Skipping test file ($calling_file_name)\n"), return "";
 
     return $calling_file_name;
 }
@@ -358,7 +376,7 @@ sub calling_file_name {
 Return 1 if $file_name is a valid calling file name, else 0.
 
 It may be invalid because of unsuitability, or because it was
-skipped. Warn if skipped.
+skipped.
 
 =cut
 sub is_calling_file_name_valid {
@@ -366,10 +384,27 @@ sub is_calling_file_name_valid {
     my ($calling_file_name) = @_;
 
     $calling_file_name eq "-e" and return 0;
+    $calling_file_name =~ $self->rex_skip_calling_file and return 0;
 
-    if ($calling_file_name =~ $self->rex_skip_calling_file) {
-        warn("Skipping test file ($calling_file_name)\n");
-        return 0;
+    return 1;
+}
+
+
+
+=head2 is_source_file_name_valid($file_name) : 1 | 0
+
+Return 1 if $file_name is a valid source file name, else 0.
+
+It may be invalid because of unsuitability, or because it was
+skipped.
+
+=cut
+sub is_source_file_name_valid {
+    my $self = shift;
+    my ($source_file_name) = @_;
+
+    for my $rex (@{$self->rex_skip_source_file}) {
+        $source_file_name =~ $rex and return 0;
     }
 
     return 1;
@@ -596,6 +631,37 @@ sub covered_files {
     )->flat;
 
     return @source_files;
+}
+
+
+
+=head2 covered_subs($source_file_name) : @array_refs_sub_count
+
+Return list of array refs [ $sub_name, $coverate_count ] with the subs
+in $source_file_name, and the accumulated coverage count for any test
+files covering it.
+
+=cut
+sub covered_subs {
+    my $self = shift;
+    my ($covered_file_name) = @_;
+
+    my @sub_count = map { [ $_->[1], $_->[2] ] } $self->db->query(
+        q{
+        SELECT ccm.covered_row, ccm.covered_sub_name, SUM(ccm.metric)
+            FROM covered_calling_metric ccm, file f_covered
+            WHERE
+                    f_covered.name = ?
+                AND ccm.covered_file_id = f_covered.file_id
+                AND ccm.metric_type_id = ?
+            GROUP BY ccm.covered_row, ccm.covered_sub_name
+            ORDER by ccm.covered_row, ccm.covered_sub_name
+        },
+        $covered_file_name,
+        $self->get_metric_type_id("subroutine"),
+    )->arrays;
+
+    return @sub_count;
 }
 
 

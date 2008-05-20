@@ -2,6 +2,15 @@
 
 = 0.008
 
+* Added option --rex_skip_source_file to specify (multiple) regexes to
+  skip reporting on source files.
+
+* New query feature "covered subs --source_file=FILE"
+
+
+
+= 0.008
+
 * "covered info" now outputs version
 
 * Moved storage of metric types to its own table in order to save disk
