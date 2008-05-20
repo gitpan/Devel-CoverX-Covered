@@ -55,10 +55,10 @@ sub main {
     if ($rex_skip_calling_file) {
         $db->rex_skip_calling_file( rex_from_qr($rex_skip_calling_file) );
     }
-    
+
     $db->rex_skip_source_file([ map { rex_from_qr($_) } @rex_skip_source_file ]);
-    
-    
+
+
     if($command eq "runs") {
         $db->collect_runs();
     }
@@ -146,14 +146,15 @@ sub rex_from_qr {
     $@ and die("Could not parse regexp ($rex_string):
 $@
 Correct regex syntax is e.g. '/ prove [.] bat /x'
-");    
+");
+    return $rex;
 }
 
 
 
 __END__
 
-[--row=N] [--sub=SUB] 
+[--row=N] [--sub=SUB]
 
 If --row (1..) is specified, limit the list to test files that cover
 that row in particular.

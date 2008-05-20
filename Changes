@@ -1,6 +1,13 @@
 = Feature oriented Revision history for Devel-CoverX-Covered =
 
-= 0.008
+
+= 0.010
+
+* Fixed a rather stupid bug in "covered" script.
+
+
+
+= 0.009
 
 * Added option --rex_skip_source_file to specify (multiple) regexes to
   skip reporting on source files.
