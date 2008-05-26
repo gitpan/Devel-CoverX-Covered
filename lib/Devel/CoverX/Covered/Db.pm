@@ -194,6 +194,9 @@ sub create_db {
         q{
             CREATE INDEX covered_calling_metric_calling ON covered_calling_metric (calling_file_id)
         },
+
+
+        ###REMEMBER: update schema_version when changing the schema
     );
 
     for my $ddl (@ddl_tables) {
@@ -210,11 +213,12 @@ sub create_db {
 
 Return a version number of the schema.
 
+Update this manually whenever the schema changes.
+
 =cut
 sub schema_version {
     my $self = shift;
-    require Devel::CoverX::Covered;
-    return Devel::CoverX::Covered->VERSION;
+    "0.01";
 }
 
 
@@ -310,7 +314,7 @@ sub collect_run {
     my @source_file_names = $cover_db->cover->items;
     for my $source_file_name (@source_file_names) {
         $self->is_source_file_name_valid($source_file_name) or next;
-        
+
         my $file_data = $cover_db->cover->file($source_file_name);
 
         for my $metric_type ("subroutine" ) { #time, branch, statement
@@ -527,19 +531,26 @@ sub get_lookup_table_id {
 
 
 
-=head2 test_files_covering($source_file_name) : @test_file_names
+=head2 test_files_covering($source_file_name, [$sub]) : @test_file_names
 
-Return list of test files that cover any line in $source_file_name.
+Return list of test files that cover any line in $source_file_name. Or
+if $sub is passed, limit to test files covering that sub.
 
 =cut
 sub test_files_covering {
     my $self = shift;
-    my ($calling_file_name) = @_;
+    my ($calling_file_name, $sub) = @_;
 
     #This needs to be sub coverage, so a "use" doesn't execute
     #statements e.g. "use strict;".
+
+    my ($and_sub_name, @and_sub_name) = ("", ());
+    if($sub) {
+        ($and_sub_name, @and_sub_name) =  ("and ccm.covered_sub_name = ?", ($sub));
+    }
+
     my @test_files = $self->db->query(
-        q{
+        qq{
         SELECT DISTINCT(f_calling.name)
             FROM covered_calling_metric ccm, file f_calling, file f_covered
             WHERE
@@ -548,10 +559,12 @@ sub test_files_covering {
                 AND ccm.covered_file_id = f_covered.file_id
                 AND ccm.metric_type_id = ?
                 AND ccm.metric > 0
+                $and_sub_name
             ORDER by f_calling.name
         },
         $calling_file_name,
         $self->get_metric_type_id("subroutine"),
+        @and_sub_name,
     )->flat;
 
     return @test_files;

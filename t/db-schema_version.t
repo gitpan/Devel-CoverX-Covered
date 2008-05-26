@@ -23,7 +23,7 @@ my $count;
 
 ok(my $covered_db = Devel::CoverX::Covered::Db->new(dir => $test_dir), "Create DB ok");
 ok(
-    $covered_db->schema_version >= 0.006 && $covered_db->schema_version < 2,
+    $covered_db->schema_version >= 0.01 && $covered_db->schema_version < 2,
     "  and got reasonable schema_version",
 );
 

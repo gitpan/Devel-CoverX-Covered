@@ -1,6 +1,6 @@
 ---
 name: Devel-CoverX-Covered
-version: 0.01
+version: 0.011
 author:
   - 'Johan Lindström <johanl[ÄT]DarSerMan.com>'
 abstract: |-
@@ -32,7 +32,7 @@ requires:
 provides:
   Devel::CoverX::Covered:
     file: lib/Devel/CoverX/Covered.pm
-    version: 0.01
+    version: 0.011
   Devel::CoverX::Covered::Db:
     file: lib/Devel/CoverX/Covered/Db.pm
 generated_by: Module::Build version 0.2808

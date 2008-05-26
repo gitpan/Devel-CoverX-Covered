@@ -41,6 +41,7 @@ sub main {
     GetOptions(
         "cover_db:s"              => \(my $cover_db = "./cover_db"),
         "source_file:s"           => \(my $source_file = ""),
+        "sub:s"                   => \(my $sub),
         "test_file:s"             => \(my $test_file = ""),
         "rex_skip_calling_file:s" => \(my $rex_skip_calling_file),
         "rex_skip_source_file:s"  => \@rex_skip_source_file,
@@ -64,7 +65,7 @@ sub main {
     }
     elsif($command eq "covering") {
         $source_file or syntax("Please specify --source_file");
-        print( join("\n", $db->test_files_covering($source_file)) . "\n" );
+        print( join("\n", $db->test_files_covering($source_file, $sub)) . "\n" );
     }
     elsif($command eq "by") {
         $test_file or syntax("Please specify --test_file");
@@ -95,6 +96,10 @@ sub main {
 # Die with the syntax text and the $message.
 sub syntax {
     my ($message) = @_;
+
+    my $error = "";
+    $message and $error = "Error: $message\n";
+    
     die q{NAME - covered
 SYNOPSIS
 
@@ -113,12 +118,29 @@ $rex_skip_calling_file (default: the prove command), and from source
 files matching any of @rex_skip_source_file.
 
 
+* Show files in database
+
+ covered info
+
+Print version, and two lists of known files: test files and covered
+files.
+
+
 * List test files covering file
 
-  covered covering --source_file=SOURCE_FILE [--cover_db=./cover_db]
+  covered covering \
+      --source_file=SOURCE_FILE [--sub=SUB_NAME] \
+      [--cover_db=./cover_db]
 
 List all test files (usually .t files) that cover any line in
 --source_file.
+
+Or, if --sub is specified, limit the list to test files covering that
+sub.
+
+Note that in the case of the same sub name appearing in many packages
+in the same file, all of them will be matched. Well, that's not the
+way to do it, is it?
 
 
 * List source files covered by test
@@ -134,8 +156,7 @@ List all source files that are covered by any line in --test_file.
 
 List all "sub names \t coverage count" for --source_file.
 
-
-Error: } . "$message\n";
+} . $error;
 }
 
 

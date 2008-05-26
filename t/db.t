@@ -1,8 +1,9 @@
 
 use strict;
 use warnings;
-use Test::More tests => 35;
+use Test::More tests => 39;
 use Test::Exception;
+use Test::Differences;
 
 use Data::Dumper;
 use Path::Class;
@@ -145,6 +146,11 @@ is_deeply(
     [],
     "test_files_covering with subroutine metric 0 finds nothing",
 );
+is_deeply(
+    [ $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "", "missing_sub") ],
+    [],
+    "test_files_covering + sub with subroutine metric 0 finds nothing",
+);
 
 
 
@@ -170,11 +176,28 @@ insert_dummy_calling_file(
 );
 is(count_rows($db), 4, "  Fixture rows");
 is(count_rows($db, "file"), 4, "  Fixture file rows");
+my @covered;
 is_deeply(
-    [ $covered_db->test_files_covering(file($covered_db->dir, "x.pm") . "") ],
+    [ @covered = $covered_db->test_files_covering(file($covered_db->dir, "x.pm") . "") ],
     [ file(qw/ t data cover_db c.t /) . "" ],
     "test_files_covering with two subroutine metric 1 finds the correct test file",
-) or die(Dumper([ $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ]));
+) or die(Dumper([ @covered ]));
+
+is_deeply(
+    [ @covered = $covered_db->test_files_covering(file($covered_db->dir, "x.pm") . "", "a") ],
+    [ file(qw/ t data cover_db c.t /) . "" ],
+    "test_files_covering + existing sub with two subroutine metric 1 finds the correct test file",
+) or die(Dumper([ @covered ]));
+is_deeply(
+    [
+        @covered = $covered_db->test_files_covering(
+            file($covered_db->dir, "x.pm") . "",
+            "missing_sub",
+        ),
+    ],
+    [ ],
+    "test_files_covering + missing sub finds nothing",
+) or die(Dumper([ @covered ]));
 
 
 is_deeply(
@@ -190,13 +213,18 @@ insert_dummy_calling_file(
     calling_file     => "a.t",
     covered_file     => "x.pm",
     covered_row      => 30,
-    covered_sub_name => "a",
+    covered_sub_name => "f",
     metric           => 1,
 );
 is_deeply(
     [ sort $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "") ],
     [ file(qw/ t data cover_db a.t /) . "", file(qw/ t data cover_db c.t /) . "" ],
     "test_files_covering with two subroutine metric 1 finds the correct test files",
+);
+is_deeply(
+    [ sort $covered_db->test_files_covering(file(qw/ t data cover_db x.pm /) . "", "f") ],
+    [ file(qw/ t data cover_db a.t /) . "" ],
+    "test_files_covering + sub with two subroutine metric 1 finds the correct test files",
 );
 
 is_deeply(
@@ -228,12 +256,13 @@ insert_dummy_calling_file(
     metric           => 7,
 );
 
-is_deeply(
+eq_or_diff(
     [ $covered_db->covered_subs(file(qw/ t data cover_db x.pm /) . "") ],
     [
         [ "b", 3 ],  #One undef metric, one 3
         [ "c", 1 ],
-        [ "a", 2 ],  #On one row
+        [ "a", 1 ],  #On one row
+        [ "f", 1 ],
         [ "a", 7 ],  #On another row
     ],
     "covered_subs finds the correc sub names and coverage count",

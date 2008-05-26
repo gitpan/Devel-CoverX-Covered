@@ -1,13 +1,31 @@
-= Feature oriented Revision history for Devel-CoverX-Covered =
+
+Feature oriented Revision history for Devel-CoverX-Covered
+==========================================================
 
 
-= 0.010
+0.011
+-----
+
+* Db schema versioned separately from the app, since that changes a
+  _lot_ less often.
+
+* Fixed http://rt.cpan.org/Public/Bug/Display.html?id=36164
+  Doc patch for "covered info" from Martin Kutter. Thanks for that!
+
+* New feature "covered covering --source_file=FILE --sub=SUB"
+
+
+
+
+0.010
+-----
 
 * Fixed a rather stupid bug in "covered" script.
 
 
 
-= 0.009
+0.009
+-----
 
 * Added option --rex_skip_source_file to specify (multiple) regexes to
   skip reporting on source files.
@@ -16,7 +34,8 @@
 
 
 
-= 0.008
+0.008
+-----
 
 * "covered info" now outputs version
 
@@ -27,14 +46,16 @@
 
 
 
-= 0.007
+0.007
+-----
 
 * Avoid collection information for the "prove" program (or calling
   files matching --rex_skip_calling_file).
 
 
 
-= 0.006
+0.006
+-----
 
 * Moved storage of file names to its own table in order to save disk
   space.
@@ -43,13 +64,15 @@
 
 
 
-= 0.005
+0.005
+-----
 
 * Fixed bug
 
 
 
-= 0.004
+0.004
+-----
 
 * Store db size and time by only storing subroutine coverage
 
@@ -57,13 +80,15 @@
 
 
 
-= 0.003
+0.003
+-----
 
 * covered by --test_file=FILE
 
 
 
-= 0.002
+0.002
+-----
 
 * Misc basic things like portable tests, deps in Build.PL, etc.
 
@@ -71,7 +96,8 @@
 
 
 
-= 0.001
+0.001
+-----
 
 * covered runs
 

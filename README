@@ -18,7 +18,8 @@ DESCRIPTION
 
   Enter Devel::CoverX::Covered
     Devel::CoverX::Covered extracts and stores the relationship between
-    covering test files and covered source files.
+    covering test files and covered source files from a Devel::Cover
+    cover_db.
 
     This makes it possible to
 
@@ -30,7 +31,7 @@ DESCRIPTION
         test file.
 
     *   Given a source file, report efficiently on the coverage details per
-        row, or sub and highlight source code accordingly.
+        row, or sub.
 
   Usage Scenarios
     Using this module it should be possible to implement e.g.
@@ -42,13 +43,19 @@ DESCRIPTION
         correspond to that source file and run only those, thereby providing
         a quicker feedback loop than running the entire test suite.
 
+    *   In the editor, highlight source code with code coverage details.
+
+    *   Determine how "unity" a unit test is. That is, how much of the code
+        base does the unit test touch? A focused unit test would not reach
+        too many parts of the source code.
+
   OUTPUT FORMAT
     The general output format is one record per line. When there are may
     columns per record, they are tab separated.
 
   Development Status
-    Early release. Solid, but somewhat prone to change as a result of
-    feedback.
+    Moderately mature, but incomplete feature-wise. Solid, but somewhat
+    prone to change as a result of feedback.
 
 SYNOPSIS
   Nightly / automatic run
@@ -70,11 +77,19 @@ SYNOPSIS
       cover -report Html_basic
 
   During development
+      #List version, and all known files
+      covered info
+
+
       #Query the covered database per source file
       covered covering --source_file=lib/MyApp/DoStuff.pm
       t/myapp-do_stuff.t
       t/myapp-do_stuff/edge_case1.t
       t/myapp-do_stuff/edge_case2.t
+
+      #Query the covered database per source file and a specific sub
+      covered covering --source_file=lib/MyApp/DoStuff.pm --sub=get_odd_values
+      t/myapp-do_stuff/edge_case1.t
 
 
       #Query the covered database per test file
@@ -83,17 +98,13 @@ SYNOPSIS
       lib/MyApp/DoStuff/DoOtherStuff.pm
 
 
-      #Query the covered database for coverate details of a source file
+      #Query the covered database for coverage details of a source file
       #sub_name \t coverage count (0 is red, >= 1 is green)
       covered subs --source_file=lib/MyApp/DoStuff.pm
       new       4
       as_string 32
       as_xml    0
       do_stuff  4
-
-
-      #List version, and all known files
-      covered info
 
     -- not implemented --
 
@@ -104,10 +115,6 @@ SYNOPSIS
       covered covering --source_file=lib/MyApp/DoStuff.pm --row=142
       t/myapp-do_stuff.t
       t/myapp-do_stuff/edge_case2.t
-
-      #Query the covered database per source file and subroutine
-      covered covering --source_file=lib/MyApp/DoStuff.pm --sub=as_xml
-      t/myapp-do_stuff.t
 
 
       #Query the covered database per test file, but also show covered
@@ -140,7 +147,10 @@ THE COVERED DATABASE
 EDITOR SUPPORT
   Emacs
     Devel::PerlySense has a feature "Go to Tests - Other Files" for
-    navigating to related files.
+    navigating to related files. Limit the list of test files when point is
+    on a "sub name" line.
+
+    PerlySense can also highlight subroutine coverage in the source code.
 
   Vim
     Ovid provides similar key bindings here:
@@ -190,11 +200,4 @@ COPYRIGHT & LICENSE
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
-
-POD ERRORS
-    Hey! The above document had some coding errors, which are explained
-    below:
-
-    Around line 54:
-        You forgot a '=back' before '=head2'
 
