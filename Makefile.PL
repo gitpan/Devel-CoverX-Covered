@@ -27,7 +27,7 @@ WriteMakefile
                            'Test::Differences' => 0,
                            'Path::Class' => '0.11',
                            'File::Basename' => 0,
-                           'Devel::Cover' => 0
+                           'Devel::Cover' => '0.64'
                          }
         )
 ;

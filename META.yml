@@ -1,6 +1,6 @@
 ---
 name: Devel-CoverX-Covered
-version: 0.011
+version: 0.012
 author:
   - 'Johan Lindström <johanl[ÄT]DarSerMan.com>'
 abstract: |-
@@ -14,7 +14,7 @@ requires:
   DBD::SQLite: 1.12
   DBIx::Simple: 0
   Data::Dumper: 0
-  Devel::Cover: 0
+  Devel::Cover: 0.64
   File::Basename: 0
   File::Slurp: 0
   File::chdir: 0
@@ -32,7 +32,7 @@ requires:
 provides:
   Devel::CoverX::Covered:
     file: lib/Devel/CoverX/Covered.pm
-    version: 0.011
+    version: 0.012
   Devel::CoverX::Covered::Db:
     file: lib/Devel/CoverX/Covered/Db.pm
 generated_by: Module::Build version 0.2808

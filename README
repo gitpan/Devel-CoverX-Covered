@@ -172,6 +172,10 @@ PLAYING WITH OTHERS
     tests with Devel::Cover enabled is so very slow anyway. The startup time
     is simply less significant here.
 
+    Another clear benefit is that it will result in smaller individual
+    Devel::Cover run files, which may otherwise be too large to handle
+    efficiently.
+
 SEE ALSO
     Devel::Cover
 

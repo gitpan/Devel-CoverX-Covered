@@ -3,6 +3,13 @@ Feature oriented Revision history for Devel-CoverX-Covered
 ==========================================================
 
 
+0.012
+-----
+
+* Fixed memory leak.
+
+
+
 0.011
 -----
 

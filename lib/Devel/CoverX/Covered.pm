@@ -237,13 +237,15 @@ The extra time taken to do this is probably not a problem since
 running tests with Devel::Cover enabled is so very slow anyway. The
 startup time is simply less significant here.
 
-
+Another clear benefit is that it will result in smaller individual
+Devel::Cover run files, which may otherwise be too large to handle
+efficiently.
 
 =cut
 
 use strict;
 package Devel::CoverX::Covered;
-our $VERSION = 0.011;
+our $VERSION = 0.012;
 
 
 

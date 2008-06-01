@@ -270,6 +270,9 @@ sub collect_runs {
             $cover_db->read($run_db_file);
 
             $self->collect_run($cover_db);
+
+            #Force release of data structure with too high ref count
+            delete $cover_db->{cover};
         }
     });
 
